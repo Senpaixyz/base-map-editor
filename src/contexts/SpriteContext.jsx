@@ -1,5 +1,5 @@
 import React, { createContext, useState, useRef, useEffect } from 'react';
-import { clearAllData } from '../utils/indexedDB';
+import { clearAllData } from '../utils/indexedDB.js';
 import { v4 as uuidv4 } from 'uuid';
 
 export const SpriteContext = createContext();

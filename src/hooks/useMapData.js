@@ -1,7 +1,8 @@
 import { useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { loadData } from '../utils/indexedDB';
+import { loadData } from '../utils/indexedDB.js';
+import PIN_DEFAULT from '../assets/img/pin-default.png';
 
 export const useMapData = () => {
     const canvasRef = useRef(null);
@@ -78,7 +79,7 @@ export const useMapData = () => {
                     // Add the pin for each sprite if showPins is true
                     if (showPins) {
                         const pinTextureLoader = new THREE.TextureLoader();
-                        const pinTexturePath = sprite.pinTexture ? sprite.pinTexture : 'pin-default.png';
+                        const pinTexturePath = sprite.pinTexture ? sprite.pinTexture : PIN_DEFAULT;
                         pinTextureLoader.load(pinTexturePath, (pinTexture) => {
                             pinTexture.flipY = true;
                             pinTexture.colorSpace = THREE.SRGBColorSpace;

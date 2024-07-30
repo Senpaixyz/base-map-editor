@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import { SpriteContext } from '../contexts/SpriteContext';
-import { drawGrid } from '../utils/drawGrid';
+import { drawGrid } from '../utils/drawGrid.js';
 
 const CanvasMap = () => {
     const canvasRef = useRef(null);

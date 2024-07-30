@@ -3,9 +3,9 @@ import { Tooltip, IconButton } from '@chakra-ui/react';
 import { FaFileExport, FaSave } from 'react-icons/fa';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SpriteContext } from '../contexts/SpriteContext';
-import { saveData, loadData } from '../utils/indexedDB';
+import { saveData, loadData } from '../utils/indexedDB.js';
 import { v4 as uuidv4 } from 'uuid';
-import { getBase64Image, convertImageToBase64 } from '../utils/imageUtils';
+import { getBase64Image, convertImageToBase64 } from '../utils/imageUtils.js';
 import JSZip from 'jszip';
 
 const SaveLoadControls = ({ isSaveDisabled }) => {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Box, Heading, Button, HStack } from '@chakra-ui/react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SpriteContext } from '../contexts/SpriteContext';
-import { getMaps, loadData } from '../utils/indexedDB';
+import { getMaps, loadData } from '../utils/indexedDB.js';
 
 const Header = () => {
     const navigate = useNavigate();

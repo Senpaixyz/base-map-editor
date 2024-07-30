@@ -1,6 +1,7 @@
 import { useCallback, useState, useRef } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
+import PIN from '../assets/img/pin.png';
 
 export const useMouseEvents = (canvasRef, sceneRef, cameraRef, raycasterRef, mouseRef, pinRef, spriteZoom, updateSpritePin, selectedSpriteRef) => {
     const [hoveredSprite, setHoveredSprite] = useState(null);
@@ -34,7 +35,7 @@ export const useMouseEvents = (canvasRef, sceneRef, cameraRef, raycasterRef, mou
 
                 // Replace pin texture with selected pin texture
                 const selectedPinTextureLoader = new THREE.TextureLoader();
-                selectedPinTextureLoader.load('pin.png', (pinTexture) => {
+                selectedPinTextureLoader.load(PIN, (pinTexture) => {
                     pinTexture.flipY = true;
                     pinTexture.colorSpace = THREE.SRGBColorSpace;
 
@@ -56,7 +57,7 @@ export const useMouseEvents = (canvasRef, sceneRef, cameraRef, raycasterRef, mou
                     });
 
                     // Update sprite pin texture
-                    updateSpritePin(intersected.userData.id, 'pin.png');
+                    updateSpritePin(intersected.userData.id, PIN);
                 });
 
                 // Zoom in on the clicked sprite with animation

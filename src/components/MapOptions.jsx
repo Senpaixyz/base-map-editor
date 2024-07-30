@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Button, HStack } from '@chakra-ui/react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SpriteContext } from '../contexts/SpriteContext';
-import { clearAllData } from '../utils/indexedDB';
+import { clearAllData } from '../utils/indexedDB.js';
 
 const MapOptions = () => {
     const { setSprites, setBackgroundImage } = useContext(SpriteContext);

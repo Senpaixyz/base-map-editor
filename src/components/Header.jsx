@@ -77,7 +77,7 @@ const Header = () => {
 
     return (
         <Box mb={4} textAlign="center">
-            <Heading as="h1" size="lg" mb={4}>Map Title 123</Heading>
+            <Heading as="h1" size="lg" mb={4}>Map Title 12345</Heading>
             <HStack spacing={4} justify="center">
                 {isRoot && (
                     <>

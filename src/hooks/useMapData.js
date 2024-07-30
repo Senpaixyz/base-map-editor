@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
+import gsap from 'gsap';
 import { loadData } from '../utils/indexedDB';
 
 export const useMapData = () => {
@@ -12,7 +13,7 @@ export const useMapData = () => {
     const pinRef = useRef(null);
     const INITIAL_ZOOM = useRef(1);
 
-    const loadMapData = useCallback(async (mapId) => {
+    const loadMapData = useCallback(async (mapId, showPins = true) => {
         const { mapData, spritesData } = await loadData();
         const currentMap = mapData.find(map => map.id === mapId);
         const associatedSprites = spritesData.filter(sprite => sprite.mapId === mapId);
@@ -71,18 +72,40 @@ export const useMapData = () => {
                     if (sprite.flipH) spriteMesh.scale.x *= -1;
                     if (sprite.flipV) spriteMesh.scale.y *= -1;
 
-                    spriteMesh.userData = { originalScale: spriteMesh.scale.clone(), name: sprite.name };
+                    spriteMesh.userData = { id: sprite.id, originalScale: spriteMesh.scale.clone(), name: sprite.name };
                     scene.add(spriteMesh);
+
+                    // Add the pin for each sprite if showPins is true
+                    if (showPins) {
+                        const pinTextureLoader = new THREE.TextureLoader();
+                        const pinTexturePath = sprite.pinTexture ? sprite.pinTexture : 'pin-default.png';
+                        pinTextureLoader.load(pinTexturePath, (pinTexture) => {
+                            pinTexture.flipY = true;
+                            pinTexture.colorSpace = THREE.SRGBColorSpace;
+
+                            const pinGeometry = new THREE.PlaneGeometry(20, 20);
+                            const pinMaterial = new THREE.MeshBasicMaterial({ map: pinTexture, transparent: true });
+                            const pinMesh = new THREE.Mesh(pinGeometry, pinMaterial);
+
+                            pinMesh.position.set(spriteMesh.position.x, spriteMesh.position.y + sprite.height / 2 + 10, 1);
+                            scene.add(pinMesh);
+
+                            // Add jumping animation
+                            gsap.to(pinMesh.position, {
+                                y: pinMesh.position.y + 10,
+                                duration: 0.5,
+                                ease: "power1.inOut",
+                                yoyo: true,
+                                repeat: -1
+                            });
+                        });
+                    }
                 });
             });
 
             const animate = () => {
                 requestAnimationFrame(animate);
                 renderer.render(scene, camera);
-
-                if (pinRef.current) {
-                    pinRef.current.position.y += Math.sin(Date.now() / 100) * 0.5;
-                }
             };
             animate();
         }

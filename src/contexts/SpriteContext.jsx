@@ -77,7 +77,7 @@ export const SpriteProvider = ({ children }) => {
     return () => {
       console.log('Map Sprite Context OnLoad Destructor');
     };
-  }, [window.location.hash, backgroundImage]);
+  }, [window.location.hash]);
 
   useEffect(() => {
     console.log("State updated: ", { mapWidth, mapHeight, backgroundImage, sprites });

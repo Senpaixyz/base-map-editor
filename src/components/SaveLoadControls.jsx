@@ -1,17 +1,16 @@
 import React, { useContext } from 'react';
 import { Tooltip, IconButton } from '@chakra-ui/react';
 import { FaFileExport, FaSave } from 'react-icons/fa';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { SpriteContext } from '../contexts/SpriteContext';
-import { saveData, loadData } from '../utils/indexedDB.js';
+import { saveData, loadData } from '../utils/indexedDB';
 import { v4 as uuidv4 } from 'uuid';
-import { getBase64Image, convertImageToBase64 } from '../utils/imageUtils.js';
+import { getBase64Image, convertImageToBase64 } from '../utils/imageUtils';
 import JSZip from 'jszip';
 
 const SaveLoadControls = ({ isSaveDisabled }) => {
     const { sprites, backgroundImage } = useContext(SpriteContext);
     const navigate = useNavigate();
-    const location = useLocation();
 
     const handleExport = async () => {
         const { mapData, spritesData } = await loadData();
@@ -34,14 +33,13 @@ const SaveLoadControls = ({ isSaveDisabled }) => {
     };
 
     const handleSave = async () => {
-        const urlParams = new URLSearchParams(location.search);
-        let mapId = urlParams.get('mapId');
+        let mapId = localStorage.getItem('mapId');
         const backgroundImageName = backgroundImage?.src.split('/').pop() || uuidv4();
 
         if (!mapId) {
             mapId = uuidv4();
-            urlParams.set('mapId', mapId);
-            navigate(`${location.pathname}?${urlParams.toString()}`);
+            localStorage.setItem('mapId', mapId);
+            navigate(`${location.pathname}`);
         }
 
         const mapData = {
@@ -59,7 +57,7 @@ const SaveLoadControls = ({ isSaveDisabled }) => {
                 id: sprite.id || uuidv4(),
                 name: sprite.name,
                 src: sprite.src,
-                img: (sprite.img.src.startsWith('data:image')) ? sprite.img.currentSrc : getBase64Image(sprite.img),  // Convert image to base64
+                img: (sprite.img.src.startsWith('data:image')) ? sprite.img.src : getBase64Image(sprite.img),  // Convert image to base64
                 x: sprite.x,
                 y: sprite.y,
                 width: sprite.width,

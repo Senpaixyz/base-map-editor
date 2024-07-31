@@ -20,7 +20,7 @@ const renderApp = (containerId) => {
         );
         console.log('App Rendered');
     } else {
-        console.error('Root element not found');
+        console.error(`${containerId} element not found`);
     }
 };
 

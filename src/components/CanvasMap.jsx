@@ -35,6 +35,7 @@ const CanvasMap = () => {
                 canvas.removeEventListener('mouseleave', handleMouseUp);
             };
         }
+        console.log("CANVAS MAP: ", [mapWidth, mapHeight, backgroundImage])
     }, [mapWidth, mapHeight, backgroundImage, sprites, highlightedCells, hoveredCell, handleMouseMove, handleMouseDown, handleMouseUp]);
 
     return mapWidth && mapHeight && backgroundImage ? <canvas id="canvas" ref={canvasRef} width={mapWidth} height={mapHeight}></canvas> : null;

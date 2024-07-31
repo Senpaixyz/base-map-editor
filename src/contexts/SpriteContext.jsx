@@ -1,6 +1,6 @@
-import React, { createContext, useState, useRef, useEffect } from 'react';
-import { clearAllData } from '../utils/indexedDB.js';
+import React, { createContext, useState, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
+import { loadData, clearAllData } from '../utils/indexedDB';
 
 export const SpriteContext = createContext();
 
@@ -15,12 +15,48 @@ export const SpriteProvider = ({ children }) => {
   const [selectedSprite, setSelectedSprite] = useState(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const spriteInputRef = useRef(null);
+  const [mapData, setMapData] = useState(null);
 
   const cellSize = 15; // Default cell size
 
   useEffect(() => {
-    console.log("State updated: ", { mapWidth, mapHeight, backgroundImage, sprites });
-  }, [mapWidth, mapHeight, backgroundImage, sprites]);
+    const fetchData = async () => {
+      const storedMapId = localStorage.getItem('mapId');
+      if (storedMapId) {
+        const { mapData, spritesData } = await loadData();
+        const currentMap = mapData.find((map) => map.id === storedMapId);
+
+        if (currentMap) {
+          const associatedSprites = spritesData.filter((sprite) => sprite.mapId === storedMapId);
+
+          const img = new Image();
+          img.src = currentMap.backgroundImage;
+          img.onload = () => {
+            setMapWidth(currentMap.width);
+            setMapHeight(currentMap.height);
+            setBackgroundImage(img);
+
+            const loadedSprites = associatedSprites.map((sprite) => {
+              const spriteImg = new Image();
+              spriteImg.src = sprite.img;
+              return new Promise((resolve) => {
+                spriteImg.onload = () => {
+                  resolve({
+                    ...sprite,
+                    img: spriteImg,
+                  });
+                };
+              });
+            });
+
+            Promise.all(loadedSprites).then(setSprites);
+          };
+        }
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const getCellCoordinates = (mouseX, mouseY) => {
     const x = Math.floor(mouseX / cellSize) * cellSize;
@@ -96,7 +132,7 @@ export const SpriteProvider = ({ children }) => {
     setDraggingSprite(null);
   };
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
       const img = new Image();
@@ -256,8 +292,7 @@ export const SpriteProvider = ({ children }) => {
         handleFlipSprite,
         handleDeleteSprite,
         handleDuplicateSprite,
-        setMapWidth, // Add this
-        setMapHeight, // Add this
+        mapData,
       }}
     >
       {children}

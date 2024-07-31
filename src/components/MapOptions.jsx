@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Button, HStack, Checkbox } from '@chakra-ui/react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SpriteContext } from '../contexts/SpriteContext';
-import { clearAllData } from '../utils/indexedDB.js';
+import { clearAllData, deleteMapAndSpritesByMapId } from '../utils/indexedDB';
 
 const MapOptions = () => {
     const { setSprites, setBackgroundImage } = useContext(SpriteContext);
@@ -10,7 +10,13 @@ const MapOptions = () => {
     const location = useLocation();
 
     const handleDelete = async () => {
-        await clearAllData();
+        const urlParams = new URLSearchParams(location.search);
+        const mapId = urlParams.get('mapId');
+        if (mapId) {
+            await deleteMapAndSpritesByMapId(mapId);
+        } else {
+            await clearAllData();
+        }
         setSprites([]);
         setBackgroundImage(null);
         navigate('/');

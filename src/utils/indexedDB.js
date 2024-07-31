@@ -108,3 +108,20 @@ export const deleteSpriteById = async (spriteId) => {
     await store.delete(spriteId);
     await tx.done;
 };
+
+export const deleteMapAndSpritesByMapId = async (mapId) => {
+    const db = await initDB();
+    const tx = db.transaction([SPRITES_STORE, MAP_STORE], 'readwrite');
+    const mapStore = tx.objectStore(MAP_STORE);
+    const spritesStore = tx.objectStore(SPRITES_STORE);
+
+    await mapStore.delete(mapId);
+    const allSprites = await spritesStore.getAll();
+    const associatedSprites = allSprites.filter(sprite => sprite.mapId === mapId);
+
+    await Promise.all(associatedSprites.map(async (sprite) => {
+        await spritesStore.delete(sprite.id);
+    }));
+
+    await tx.done;
+};

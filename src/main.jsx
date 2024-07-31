@@ -24,13 +24,4 @@ const renderApp = (containerId) => {
     }
 };
 
-// Export the function globally for vanilla JS integration
-if (typeof window !== 'undefined') {
-    window.MapEditorCMS = window.MapEditorCMS || {};
-    window.MapEditorCMS.renderApp = renderApp;
-}
-
-// Immediately call renderApp if you want to render it by default in development
-if (process.env.NODE_ENV !== 'production') {
-    renderApp('root');
-}
+renderApp('root');

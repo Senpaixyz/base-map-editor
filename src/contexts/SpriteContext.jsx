@@ -1,7 +1,8 @@
 import React, { createContext, useState, useRef, useEffect } from 'react';
-import { getMapAndSpritesByMapId, deleteSpriteById } from '../utils/indexedDB';
+import { saveData, getMapAndSpritesByMapId, deleteSpriteById } from '../utils/indexedDB';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
+import { getBase64Image } from '../utils/imageUtils';
 
 export const SpriteContext = createContext();
 
@@ -65,23 +66,18 @@ export const SpriteProvider = ({ children }) => {
             img.onerror = (error) => {
               console.error("Error loading background image:", error);
             };
-          } else {
-            window.alert('Failed to load Map and Sprites');
           }
         }
       }
+
     };
 
     onLoadAssets();
 
     return () => {
       console.log('Map Sprite Context OnLoad Destructor');
-      setMapWidth(null);
-      setMapHeight(null);
-      setSprites([]);
-      setBackgroundImage(null);
     };
-  }, [window.location.hash]);
+  }, [window.location.hash, backgroundImage]);
 
   useEffect(() => {
     console.log("State updated: ", { mapWidth, mapHeight, backgroundImage, sprites });
@@ -166,13 +162,28 @@ export const SpriteProvider = ({ children }) => {
     if (file) {
       const img = new Image();
       img.src = URL.createObjectURL(file);
-      img.onload = () => {
+      img.onload = async () => {
         // await clearAllData();
         setMapWidth(img.width);
         setMapHeight(img.height);
         setSprites([]);
         setBackgroundImage(img);
-        navigate('/create');
+
+        const mapId = uuidv4();
+
+        const mapData = {
+          id: mapId,
+          name: `Map_${mapId}`,
+          backgroundImage: img ? getBase64Image(img) : null,
+          x: img.x,
+          y: img.y,
+          width: img.width,
+          height: img.height,
+        };
+
+        await saveData(mapData, []);
+
+        navigate(`/create?mapId=${mapId}`);
       };
     }
   };

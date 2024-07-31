@@ -1,6 +1,7 @@
-import React, { createContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useState, useRef, useEffect } from 'react';
+import { getMapAndSpritesByMapId, deleteSpriteById } from '../utils/indexedDB';
+import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
-import { loadData, clearAllData } from '../utils/indexedDB';
 
 export const SpriteContext = createContext();
 
@@ -15,48 +16,76 @@ export const SpriteProvider = ({ children }) => {
   const [selectedSprite, setSelectedSprite] = useState(null);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const spriteInputRef = useRef(null);
-  const [mapData, setMapData] = useState(null);
+  const navigate = useNavigate();
 
   const cellSize = 15; // Default cell size
 
   useEffect(() => {
-    const fetchData = async () => {
-      const storedMapId = localStorage.getItem('mapId');
-      if (storedMapId) {
-        const { mapData, spritesData } = await loadData();
-        const currentMap = mapData.find((map) => map.id === storedMapId);
+    const onLoadAssets = async () => {
+      const hash = window.location.hash;
+      // Split the hash to get the query part
+      const query = hash.split('?')[1];
+      if (query) {
+        // Parse the query parameters
+        const params = new URLSearchParams(query);
+        // Get the value of 'mapId'
+        const mapId = params.get('mapId');
+        if (mapId) {
+          const { map, sprites } = await getMapAndSpritesByMapId(mapId);
+          if (map) {
+            setMapWidth(map.width);
+            setMapHeight(map.height);
 
-        if (currentMap) {
-          const associatedSprites = spritesData.filter((sprite) => sprite.mapId === storedMapId);
+            const img = new Image();
+            img.src = map.backgroundImage;
+            img.onload = () => {
+              setBackgroundImage(img);
 
-          const img = new Image();
-          img.src = currentMap.backgroundImage;
-          img.onload = () => {
-            setMapWidth(currentMap.width);
-            setMapHeight(currentMap.height);
-            setBackgroundImage(img);
-
-            const loadedSprites = associatedSprites.map((sprite) => {
-              const spriteImg = new Image();
-              spriteImg.src = sprite.img;
-              return new Promise((resolve) => {
-                spriteImg.onload = () => {
-                  resolve({
-                    ...sprite,
-                    img: spriteImg,
-                  });
-                };
+              const spritesWithImages = sprites.map(sprite => {
+                const spriteImg = new Image();
+                spriteImg.src = sprite.img;
+                spriteImg.width = sprite.width;
+                spriteImg.height = sprite.height;
+                spriteImg.originalWidth = sprite.originalWidth;
+                spriteImg.originalHeight = sprite.originalHeight;
+                return { ...sprite, img: spriteImg };
               });
-            });
 
-            Promise.all(loadedSprites).then(setSprites);
-          };
+              Promise.all(
+                spritesWithImages.map(
+                  sprite =>
+                    new Promise(resolve => {
+                      sprite.img.onload = () => resolve(sprite);
+                    })
+                )
+              ).then(loadedSprites => {
+                setSprites(loadedSprites);
+              });
+            };
+            img.onerror = (error) => {
+              console.error("Error loading background image:", error);
+            };
+          } else {
+            window.alert('Failed to load Map and Sprites');
+          }
         }
       }
     };
 
-    fetchData();
-  }, []);
+    onLoadAssets();
+
+    return () => {
+      console.log('Map Sprite Context OnLoad Destructor');
+      setMapWidth(null);
+      setMapHeight(null);
+      setSprites([]);
+      setBackgroundImage(null);
+    };
+  }, [window.location.hash]);
+
+  useEffect(() => {
+    console.log("State updated: ", { mapWidth, mapHeight, backgroundImage, sprites });
+  }, [mapWidth, mapHeight, backgroundImage, sprites]);
 
   const getCellCoordinates = (mouseX, mouseY) => {
     const x = Math.floor(mouseX / cellSize) * cellSize;
@@ -132,17 +161,18 @@ export const SpriteProvider = ({ children }) => {
     setDraggingSprite(null);
   };
 
-  const handleImageUpload = async (e) => {
+  const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
       const img = new Image();
       img.src = URL.createObjectURL(file);
-      img.onload = async () => {
-        await clearAllData();
+      img.onload = () => {
+        // await clearAllData();
         setMapWidth(img.width);
         setMapHeight(img.height);
         setSprites([]);
         setBackgroundImage(img);
+        navigate('/create');
       };
     }
   };
@@ -242,8 +272,10 @@ export const SpriteProvider = ({ children }) => {
     }
   };
 
-  const handleDeleteSprite = () => {
+  const handleDeleteSprite = async () => {
     if (selectedSprite !== null) {
+      const spriteToDelete = sprites[selectedSprite];
+      await deleteSpriteById(spriteToDelete.id);
       setSprites(sprites.filter((_, index) => index !== selectedSprite));
       handleDeselectSprite();
     }
@@ -292,7 +324,8 @@ export const SpriteProvider = ({ children }) => {
         handleFlipSprite,
         handleDeleteSprite,
         handleDuplicateSprite,
-        mapData,
+        setMapWidth, // Add this
+        setMapHeight, // Add this
       }}
     >
       {children}

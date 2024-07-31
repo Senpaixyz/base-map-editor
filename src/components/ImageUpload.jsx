@@ -4,7 +4,7 @@ import { Box, Text } from '@chakra-ui/react';
 import { SpriteContext } from '../contexts/SpriteContext';
 
 const ImageUpload = () => {
-    const { handleImageUpload, backgroundImage } = useContext(SpriteContext);
+    const { handleImageUpload } = useContext(SpriteContext);
 
     const onDrop = useCallback((acceptedFiles) => {
         const file = acceptedFiles[0];
@@ -15,7 +15,7 @@ const ImageUpload = () => {
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, accept: 'image/*' });
 
-    return !backgroundImage && (
+    return (
         <Box
             {...getRootProps()}
             border="2px dashed"
@@ -27,9 +27,9 @@ const ImageUpload = () => {
         >
             <input {...getInputProps()} />
             {isDragActive ? (
-                <Text>Drop the files here ...</Text>
+                <Text>Drop the Image here ...</Text>
             ) : (
-                <Text>Drag 'n' drop some files here, or click to select files</Text>
+                <Text>Drag 'n' drop some Image here, or click to Create New Map</Text>
             )}
         </Box>
     );

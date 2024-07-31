@@ -11,8 +11,9 @@ export default defineConfig({
       formats: ['umd'],
     },
     rollupOptions: {
-      // Do not treat react and react-dom as external dependencies
-      // This will include them in the bundle
+      output: {
+        assetFileNames: "map-editor-cms.min.[ext]",
+      },
     },
   },
   define: {

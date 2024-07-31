@@ -28,16 +28,23 @@ export const getMaps = async () => {
     return maps;
 };
 
-const clearSpritesStore = async (db) => {
-    const tx = db.transaction(SPRITES_STORE, 'readwrite');
+export const getMapAndSpritesByMapId = async (mapId) => {
+    const db = await initDB();
+    const tx = db.transaction([MAP_STORE, SPRITES_STORE], 'readonly');
+    const mapStore = tx.objectStore(MAP_STORE);
     const spritesStore = tx.objectStore(SPRITES_STORE);
-    await spritesStore.clear();
+
+    const map = await mapStore.get(mapId);
+    const sprites = await spritesStore.getAll();
+
+    const associatedSprites = sprites.filter(sprite => sprite.mapId === mapId);
+
     await tx.done;
+    return { map, sprites: associatedSprites };
 };
 
 export const saveData = async (mapData, spritesData) => {
     const db = await initDB();
-    await clearSpritesStore(db); // Clear the sprites store before saving new data
 
     const tx = db.transaction([SPRITES_STORE, MAP_STORE], 'readwrite');
     const spritesStore = tx.objectStore(SPRITES_STORE);
@@ -51,7 +58,25 @@ export const saveData = async (mapData, spritesData) => {
     }
 
     await Promise.all(spritesData.map(async (sprite) => {
-        await spritesStore.put(sprite);
+        const existingSprite = await spritesStore.get(sprite.id);
+        if (!existingSprite) {
+            await spritesStore.put(sprite);
+        } else {
+            // Retain certain properties and update others
+            const updatedSprite = {
+                ...existingSprite,
+                x: sprite.x,
+                y: sprite.y,
+                width: sprite.width,
+                height: sprite.height,
+                flipH: sprite.flipH,
+                flipV: sprite.flipV,
+                originalWidth: sprite.originalWidth,
+                originalHeight: sprite.originalHeight,
+            };
+
+            await spritesStore.put(updatedSprite);
+        }
     }));
 
     await tx.done;
@@ -73,5 +98,13 @@ export const clearAllData = async () => {
     await spritesStore.clear();
     await mapStore.clear();
 
+    await tx.done;
+};
+
+export const deleteSpriteById = async (spriteId) => {
+    const db = await initDB();
+    const tx = db.transaction(SPRITES_STORE, 'readwrite');
+    const store = tx.objectStore(SPRITES_STORE);
+    await store.delete(spriteId);
     await tx.done;
 };

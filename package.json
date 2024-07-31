@@ -7,11 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "webpack-start": "NODE_ENV=development webpack serve --config webpack.config.mjs --open",
-    "webpack-build": "NODE_ENV=production webpack --config webpack.config.mjs --mode production",
-    "win-webpack-start": "cross-env NODE_ENV=development webpack serve --config webpack.config.mjs --open",
-    "win-webpack-build": "cross-env NODE_ENV=production webpack --config webpack.config.mjs --mode production"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@babel/plugin-transform-react-jsx": "^7.25.2",

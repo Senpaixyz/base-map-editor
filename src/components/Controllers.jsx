@@ -37,7 +37,6 @@ const Controllers = () => {
                         onChange={handleSpriteUpload}
                         display="none"
                     />
-                    <ImageUpload />
                 </>
             )}
             {selectedSprite !== null && (

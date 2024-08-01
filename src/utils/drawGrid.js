@@ -24,7 +24,7 @@ export const drawGrid = (ctx, mapWidth, mapHeight, cellSize, backgroundImage, sp
         }
     }
 
-    console.log("SPRITES: ", sprites)
+    // console.log("SPRITES: ", sprites)
 
     sprites.forEach(sprite => {
         ctx.save();

@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Button, HStack, Checkbox } from '@chakra-ui/react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SpriteContext } from '../contexts/SpriteContext';
-import { clearAllData, deleteMapAndSpritesByMapId } from '../utils/indexedDB';
+import { deleteMapAndSpritesByMapId } from '../utils/indexedDB';
 
 const MapOptions = () => {
     const { setSprites, setBackgroundImage } = useContext(SpriteContext);
@@ -14,12 +14,13 @@ const MapOptions = () => {
         const mapId = urlParams.get('mapId');
         if (mapId) {
             await deleteMapAndSpritesByMapId(mapId);
-        } else {
-            await clearAllData();
+            setSprites([]);
+            setBackgroundImage(null);
+            navigate('/');
         }
-        setSprites([]);
-        setBackgroundImage(null);
-        navigate('/');
+        else {
+            window.alert('Failed to Delete Map');
+        }
     };
 
     const handleViewPreview = () => {

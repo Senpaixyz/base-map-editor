@@ -1,21 +1,42 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Box, Heading, SimpleGrid, Image as ChakraImage, Text, Button } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
-import { getMaps } from '../utils/indexedDB';
-import { SpriteContext } from '../contexts/SpriteContext';
+import { getMaps, loadMapsAndSprites } from '../utils/indexedDB';
 import ImageUpload from './ImageUpload';
+import { useOptions } from '../contexts/MapEditorInstanceContext';
 
 const Home = () => {
+  const { options } = useOptions();
   const [maps, setMaps] = useState([]);
   const navigate = useNavigate();
-  const { setMapWidth, setMapHeight, setBackgroundImage, setSprites } = useContext(SpriteContext);
 
   useEffect(() => {
-    const fetchMaps = async () => {
+
+    const res = new Promise(async (resolve, reject) => {
+      try {
+        const { maps, sprites } = await options.current.load();
+        console.log("DATA: ", { maps, sprites })
+        loadMapsAndSprites(maps, sprites)
+          .then((res) => {
+            resolve(maps)
+          })
+          .catch((error) => {
+            reject(error);
+          });
+      }
+      catch (error) {
+        reject(error);
+      }
+    });
+
+    res.then(async (maps) => {
       const mapsData = await getMaps();
       setMaps(mapsData);
-    };
-    fetchMaps();
+    })
+      .catch((error) => {
+        window.alert(`Error onload Map ${error}`);
+      });
+
   }, []);
 
   const handleContinue = async (mapId) => {

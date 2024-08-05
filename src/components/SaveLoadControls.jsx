@@ -3,6 +3,7 @@ import { Tooltip, IconButton } from '@chakra-ui/react';
 import { FaFileExport, FaSave } from 'react-icons/fa';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SpriteContext } from '../contexts/SpriteContext';
+import { useOptions } from '../contexts/MapEditorInstanceContext';
 import { saveData, loadData } from '../utils/indexedDB';
 import { v4 as uuidv4 } from 'uuid';
 import { getBase64Image } from '../utils/imageUtils';
@@ -12,6 +13,7 @@ const SaveLoadControls = ({ isSaveDisabled }) => {
     const { sprites, backgroundImage } = useContext(SpriteContext);
     const navigate = useNavigate();
     const location = useLocation();
+    const { options } = useOptions();
 
     const handleExport = async () => {
         const { mapData, spritesData } = await loadData();
@@ -36,12 +38,15 @@ const SaveLoadControls = ({ isSaveDisabled }) => {
     const handleSave = async () => {
         const urlParams = new URLSearchParams(location.search);
         let mapId = urlParams.get('mapId');
-        const backgroundImageName = backgroundImage?.src.split('/').pop() || uuidv4();
+        let backgroundImageName = backgroundImage?.src.split('/').pop() || uuidv4();
 
         if (!mapId) {
             mapId = uuidv4();
             urlParams.set('mapId', mapId);
             navigate(`${location.pathname}?${urlParams.toString()}`);
+        }
+        else {
+            backgroundImageName = mapId;
         }
 
         const mapData = {
@@ -72,7 +77,16 @@ const SaveLoadControls = ({ isSaveDisabled }) => {
             }
         }));
 
-        await saveData(mapData, spriteData);
+        saveData(mapData, spriteData)
+            .then(() => {
+                options.current.store(mapData, spriteData)
+            })
+            .catch((error) => {
+                console.error(`FAILED TO SYNC DATA: ${error}`);
+            });
+
+
+
         window.alert('Data saved successfully!');
     };
 

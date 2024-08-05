@@ -1,4 +1,5 @@
-import React, { createContext, useState, useRef, useEffect } from 'react';
+import React, { createContext, useState, useContext, useRef, useEffect } from 'react';
+import { useOptions } from './MapEditorInstanceContext';
 import { saveData, getMapAndSpritesByMapId, deleteSpriteById } from '../utils/indexedDB';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,6 +19,7 @@ export const SpriteProvider = ({ children }) => {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const spriteInputRef = useRef(null);
   const navigate = useNavigate();
+  const { options } = useOptions();
 
   const cellSize = 15; // Default cell size
 
@@ -67,6 +69,14 @@ export const SpriteProvider = ({ children }) => {
               console.error("Error loading background image:", error);
             };
           }
+          else {
+            window.alert('Map id not found')
+            navigate('/');
+          }
+        }
+        else {
+          window.alert('Map id not found')
+          navigate('/');
         }
       }
 
@@ -121,8 +131,10 @@ export const SpriteProvider = ({ children }) => {
             y: mouseY - offset.y,
           };
           updateHighlightedCells(updatedSprite);
+          options.current.selected(updatedSprite);
           return updatedSprite;
         }
+        options.current.selected(sprite);
         return sprite;
       });
       setSprites(updatedSprites);
@@ -181,7 +193,14 @@ export const SpriteProvider = ({ children }) => {
           height: img.height,
         };
 
-        await saveData(mapData, []);
+        saveData(mapData, [])
+          .then(async () => {
+            const { mapData, spritesData } = await loadData();
+            await options.current.fetch(mapData, spritesData);
+          })
+          .catch((error) => {
+            console.error(`FAILED TO SYNC DATA: ${error}`);
+          });
 
         navigate(`/create?mapId=${mapId}`);
       };
@@ -287,6 +306,7 @@ export const SpriteProvider = ({ children }) => {
     if (selectedSprite !== null) {
       const spriteToDelete = sprites[selectedSprite];
       await deleteSpriteById(spriteToDelete.id);
+      await options.current.deleteSprite(spriteToDelete, spriteToDelete.id);
       setSprites(sprites.filter((_, index) => index !== selectedSprite));
       handleDeselectSprite();
     }

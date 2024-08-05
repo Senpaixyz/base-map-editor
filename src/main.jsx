@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
 import { HashRouter as Router } from 'react-router-dom';
 import { ChakraProvider } from '@chakra-ui/react';
 import App from './App';
+import { MapEditorInstanceProvider, OPTIONS } from './contexts/MapEditorInstanceContext';
 
 /**
  * MapEditorCMS - A library to render a custom React component into a target DOM element.
@@ -11,8 +12,10 @@ import App from './App';
  * @param {Object} options - The options object for configuring the component.
  */
 class MapEditorCMS {
-    constructor(target, options = {}) {
-        this.options = options;
+    constructor(target, options = OPTIONS) {
+        self = this;
+        self.target = target;
+        self.options = options;
         // private method not accessible via instance. REQUIRED
         function _render() {
             const element = document.getElementById(target);
@@ -22,9 +25,11 @@ class MapEditorCMS {
                 root.render(
                     <React.StrictMode>
                         <ChakraProvider>
-                            <Router>
-                                <App />
-                            </Router>
+                            <MapEditorInstanceProvider>
+                                <Router>
+                                    <App self={self} />
+                                </Router>
+                            </MapEditorInstanceProvider>
                         </ChakraProvider>
                     </React.StrictMode>
                 );
@@ -35,50 +40,25 @@ class MapEditorCMS {
         }
         _render(); // private;
     }
-    // load(data) {
-    //     return new Promise((resolve, reject) => {
-    //         // store to indexedDB
-    //         resolve(data);
-    //     })
-    // }
-    // store(callback) {
-    //     const data = {};// data from indexedDB ;
-    //     callback(data);
-    // }
+    load(fn = () => { }) {
+        self.options.load = fn;
+    }
+    store(fn = (m, s) => { }) {
+        self.options.store = fn;
+    }
+    selected() {
+        return self.options.selected();
+    }
 }
 
-const map = new MapEditorCMS('root');
+if (process.env.NODE_ENV !== 'production') {
+    const map = new MapEditorCMS('root', {
+        load: () => { return { maps: [], sprites: [] } },
+        store: (map, sprites) => { console.log(`Map: [${map}], Sprites: [${sprites}]`, [map, sprites]) },
+        selected: (sprite) => { console.log(`Selected`, sprite) },
+        deleteSprite: (sprite, id) => { console.log(`deleting ${id}`) },
+        deleteMap: (map, id) => { console.log(`deleting ${id}`) },
+    });
+}
 
 export default MapEditorCMS;
-
-// const renderApp = (containerId) => {
-//     console.log('Rendering App');
-//     if (root) {
-
-//         const root = ReactDOM.createRoot(document.getElementById(containerId));
-//         root.render(
-//             <React.StrictMode>
-//                 <ChakraProvider>
-//                     <Router>
-//                         <App />
-//                     </Router>
-//                 </ChakraProvider>
-//             </React.StrictMode>
-//         );
-//         console.log('App Rendered');
-//     } else {
-//         console.error(`${containerId} element not found`);
-//     }
-// };
-
-// // Export the function globally for vanilla JS integration
-// if (typeof window !== 'undefined') {
-//     window.MapEditorCMS = {
-//         renderApp
-//     };
-// }
-
-// // Immediately call renderApp if you want to render it by default in development
-// if (process.env.NODE_ENV !== 'production') {
-//     renderApp('root');
-// }

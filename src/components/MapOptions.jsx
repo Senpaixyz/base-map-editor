@@ -3,17 +3,20 @@ import { Button, HStack, Checkbox } from '@chakra-ui/react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SpriteContext } from '../contexts/SpriteContext';
 import { deleteMapAndSpritesByMapId } from '../utils/indexedDB';
+import { useOptions } from '../contexts/MapEditorInstanceContext';
 
 const MapOptions = () => {
-    const { setSprites, setBackgroundImage } = useContext(SpriteContext);
+    const { backgroundImage, setSprites, setBackgroundImage } = useContext(SpriteContext);
     const navigate = useNavigate();
     const location = useLocation();
+    const { options } = useOptions();
 
     const handleDelete = async () => {
         const urlParams = new URLSearchParams(location.search);
         const mapId = urlParams.get('mapId');
         if (mapId) {
             await deleteMapAndSpritesByMapId(mapId);
+            await options.current.deleteMap(backgroundImage, mapId);
             setSprites([]);
             setBackgroundImage(null);
             navigate('/');

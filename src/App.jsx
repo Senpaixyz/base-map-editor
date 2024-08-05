@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import './App.css';
 import { Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
@@ -12,8 +12,17 @@ import { Box, VStack } from '@chakra-ui/react';
 import { SpriteProvider, SpriteContext } from './contexts/SpriteContext';
 import { useShortcutKeys } from './utils/shortcutKeys';
 import { MapProvider } from './contexts/MapContext';
+import { useOptions } from './contexts/MapEditorInstanceContext';
 
-const App = () => {
+const App = ({ self }) => {
+  const { instance, options } = useOptions();
+
+  useEffect(() => {
+    instance.current = self;
+    options.current = { ...self.options };
+    console.log("SELF: ", self)
+  }, []);
+
   return (
     <SpriteProvider>
       <Box p={4}>

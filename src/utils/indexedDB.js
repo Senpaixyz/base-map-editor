@@ -78,9 +78,9 @@ export const saveData = async (mapData, spritesData) => {
             await spritesStore.put(updatedSprite);
         }
     }));
-
     await tx.done;
-};
+    console.log('saving data..');
+}
 
 export const loadData = async () => {
     const db = await initDB();
@@ -121,6 +121,29 @@ export const deleteMapAndSpritesByMapId = async (mapId) => {
 
     await Promise.all(associatedSprites.map(async (sprite) => {
         await spritesStore.delete(sprite.id);
+    }));
+
+    await tx.done;
+};
+
+export const loadMapsAndSprites = async (maps, sprites) => {
+    const db = await initDB();
+    const tx = db.transaction([MAP_STORE, SPRITES_STORE], 'readwrite');
+    const mapStore = tx.objectStore(MAP_STORE);
+    const spritesStore = tx.objectStore(SPRITES_STORE);
+
+    await Promise.all(maps.map(async (map) => {
+        const existingMap = await mapStore.get(map.id);
+        if (!existingMap) {
+            await mapStore.put(map);
+        }
+    }));
+
+    await Promise.all(sprites.map(async (sprite) => {
+        const existingSprite = await spritesStore.get(sprite.id);
+        if (!existingSprite) {
+            await spritesStore.put(sprite);
+        }
     }));
 
     await tx.done;

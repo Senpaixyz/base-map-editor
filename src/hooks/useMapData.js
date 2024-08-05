@@ -1,8 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
-import { loadData } from '../utils/indexedDB.js';
-import PIN_DEFAULT from '../assets/img/pin-default.png';
+import { loadData } from '../utils/indexedDB';
 
 export const useMapData = () => {
     const canvasRef = useRef(null);
@@ -73,13 +72,13 @@ export const useMapData = () => {
                     if (sprite.flipH) spriteMesh.scale.x *= -1;
                     if (sprite.flipV) spriteMesh.scale.y *= -1;
 
-                    spriteMesh.userData = { id: sprite.id, originalScale: spriteMesh.scale.clone(), name: sprite.name };
+                    spriteMesh.userData = { id: sprite.id, originalScale: spriteMesh.scale.clone(), name: sprite.name, isBlinking: sprite.isBlinking };
                     scene.add(spriteMesh);
 
                     // Add the pin for each sprite if showPins is true
                     if (showPins) {
                         const pinTextureLoader = new THREE.TextureLoader();
-                        const pinTexturePath = sprite.pinTexture ? sprite.pinTexture : PIN_DEFAULT;
+                        const pinTexturePath = sprite.pinTexture ? sprite.pinTexture : 'pin-default.png';
                         pinTextureLoader.load(pinTexturePath, (pinTexture) => {
                             pinTexture.flipY = true;
                             pinTexture.colorSpace = THREE.SRGBColorSpace;
@@ -100,6 +99,25 @@ export const useMapData = () => {
                                 repeat: -1
                             });
                         });
+                    }
+
+                    // Add blinking animation if isBlinking is true
+                    if (sprite.isBlinking) {
+                        const blinkTween = gsap.to(spriteMesh.material.color, {
+                            r: 1,
+                            g: 1,
+                            b: 1,
+                            duration: 0.5,
+                            ease: "power1.inOut",
+                            yoyo: true,
+                            repeat: -1,
+                            onRepeat: () => {
+                                spriteMesh.material.color.set(
+                                    spriteMesh.material.color.getHex() === 0x000000 ? 0xffffff : 0x000000
+                                );
+                            }
+                        });
+                        spriteMesh.blinkTween = blinkTween;
                     }
                 });
             });

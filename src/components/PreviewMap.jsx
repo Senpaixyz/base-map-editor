@@ -12,7 +12,7 @@ const PreviewMap = ({ showPins = true }) => {
         loadMapData(mapId, showPins);
     }, [location.search, loadMapData, showPins]);
 
-    return <canvas ref={canvasRef} style={{ border: '1px solid black' }} />;
+    return <canvas ref={canvasRef} style={{ border: '1px solid black', marginTop: '300px' }} />;
 };
 
 export default PreviewMap;

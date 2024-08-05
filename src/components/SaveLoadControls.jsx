@@ -73,7 +73,9 @@ const SaveLoadControls = ({ isSaveDisabled }) => {
                 flipV: sprite.flipV,
                 mapId: mapId,
                 originalWidth: sprite.originalWidth, // Add originalWidth
-                originalHeight: sprite.originalHeight, // Add originalHeight
+                originalHeight: sprite.originalHeight, // Add originalHeight,
+                pinTexture: 'pin-default.png',
+                isBlinking: false
             }
         }));
 

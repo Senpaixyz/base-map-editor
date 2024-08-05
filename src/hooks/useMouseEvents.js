@@ -1,10 +1,11 @@
 import { useCallback, useState, useRef } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
-import PIN from '../assets/img/pin.png';
 
-export const useMouseEvents = (canvasRef, sceneRef, cameraRef, raycasterRef, mouseRef, pinRef, spriteZoom, updateSpritePin, selectedSpriteRef) => {
+export const useMouseEvents = (canvasRef, sceneRef, cameraRef, raycasterRef, mouseRef, pinRef, spriteZoom, updateSpritePin, updateSpriteBlink, selectedSpriteRef) => {
     const [hoveredSprite, setHoveredSprite] = useState(null);
+    const [showModal, setShowModal] = useState(false); // State to control modal visibility
+    const [spriteInfo, setSpriteInfo] = useState(null); // State to hold sprite info
     const isDragging = useRef(false);
     const isLongPress = useRef(false);
     const longPressTimeout = useRef(null);
@@ -26,16 +27,23 @@ export const useMouseEvents = (canvasRef, sceneRef, cameraRef, raycasterRef, mou
         if (intersects.length > 0) {
             const intersected = intersects[0].object;
             if (intersected.userData && intersected.userData.name) {
-                alert(`Sprite Name: ${intersected.userData.name}`);
+                setSpriteInfo(intersected.userData); // Set sprite info
+                setShowModal(true); // Show modal
 
-                // Remove previous pin if any
+                // Remove previous pin and stop blinking if any
                 if (selectedSpriteRef.current) {
-                    sceneRef.current.remove(selectedSpriteRef.current);
+                    const previousSelectedSprite = selectedSpriteRef.current;
+                    sceneRef.current.remove(previousSelectedSprite.pinMesh);
+                    if (previousSelectedSprite.blinkTween) {
+                        previousSelectedSprite.blinkTween.kill();
+                    }
+                    previousSelectedSprite.material.color.set(0xffffff); // Reset color to white
+                    updateSpriteBlink(previousSelectedSprite.userData.id, false);
                 }
 
                 // Replace pin texture with selected pin texture
                 const selectedPinTextureLoader = new THREE.TextureLoader();
-                selectedPinTextureLoader.load(PIN, (pinTexture) => {
+                selectedPinTextureLoader.load('pin.png', (pinTexture) => {
                     pinTexture.flipY = true;
                     pinTexture.colorSpace = THREE.SRGBColorSpace;
 
@@ -44,7 +52,7 @@ export const useMouseEvents = (canvasRef, sceneRef, cameraRef, raycasterRef, mou
                     const pinMesh = new THREE.Mesh(pinGeometry, pinMaterial);
 
                     pinMesh.position.set(intersected.position.x, intersected.position.y + intersected.geometry.parameters.height / 2 + 10, 1);
-                    selectedSpriteRef.current = pinMesh;
+                    intersected.pinMesh = pinMesh;
                     sceneRef.current.add(pinMesh);
 
                     // Add jumping animation
@@ -57,13 +65,37 @@ export const useMouseEvents = (canvasRef, sceneRef, cameraRef, raycasterRef, mou
                     });
 
                     // Update sprite pin texture
-                    updateSpritePin(intersected.userData.id, PIN);
+                    updateSpritePin(intersected.userData.id, 'pin.png');
                 });
+
+                // Set the blinking property to true and add pulsing animation to the selected sprite
+                updateSpriteBlink(intersected.userData.id, true);
+                const blinkTween = gsap.to(intersected.material.color, {
+                    r: 0,
+                    g: 0,
+                    b: 0,
+                    duration: 0.5,
+                    ease: "power1.inOut",
+                    yoyo: true,
+                    repeat: -1,
+                    onRepeat: () => {
+                        intersected.material.color.set(
+                            intersected.material.color.getHex() === 0x000000 ? 0xffffff : 0x000000
+                        );
+                    }
+                });
+                intersected.blinkTween = blinkTween;
+
+                // Calculate the offset based on the sprite width and camera zoom
+                const canvasWidth = canvas.clientWidth;
+                const offsetX = ((canvasWidth / 1.85) / 2.5); // Updated offset calculation
+                const targetX = intersected.position.x - offsetX + (intersected.geometry.parameters.width / 2);
+                const targetY = intersected.position.y;
 
                 // Zoom in on the clicked sprite with animation
                 gsap.to(cameraRef.current.position, {
-                    x: intersected.position.x,
-                    y: intersected.position.y,
+                    x: targetX,
+                    y: targetY,
                     duration: 1.5,
                     ease: "power2.inOut",
                     onUpdate: () => cameraRef.current.updateProjectionMatrix()
@@ -74,9 +106,12 @@ export const useMouseEvents = (canvasRef, sceneRef, cameraRef, raycasterRef, mou
                     ease: "power2.inOut",
                     onUpdate: () => cameraRef.current.updateProjectionMatrix()
                 });
+
+                // Update selected sprite reference
+                selectedSpriteRef.current = intersected;
             }
         }
-    }, [spriteZoom, updateSpritePin, selectedSpriteRef]);
+    }, [spriteZoom, updateSpritePin, updateSpriteBlink, selectedSpriteRef]);
 
     const handleMouseMove = useCallback((event) => {
         const canvas = canvasRef.current;
@@ -90,6 +125,7 @@ export const useMouseEvents = (canvasRef, sceneRef, cameraRef, raycasterRef, mou
             cameraRef.current.position.x -= deltaX / cameraRef.current.zoom;
             cameraRef.current.position.y += deltaY / cameraRef.current.zoom;
             lastMousePosition.current = { x: event.clientX, y: event.clientY };
+            setShowModal(false); // Hide modal when dragging starts
             return;
         }
 
@@ -188,5 +224,5 @@ export const useMouseEvents = (canvasRef, sceneRef, cameraRef, raycasterRef, mou
         return Math.sqrt(dx * dx + dy * dy);
     };
 
-    return { handleMouseMove, handleMouseDown, handleMouseUp, handleTouchStart, handleTouchMove, handleTouchEnd };
+    return { handleMouseMove, handleMouseDown, handleMouseUp, handleTouchStart, handleTouchMove, handleTouchEnd, showModal, setShowModal, spriteInfo };
 };
